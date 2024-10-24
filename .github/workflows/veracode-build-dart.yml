@@ -27,7 +27,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         java-version: 1.9
-        distribution: oracle
+        distribution: temurin
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
