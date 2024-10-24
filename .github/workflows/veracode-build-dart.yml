@@ -33,9 +33,9 @@ jobs:
       uses: android-actions/setup-android@v2
 
     - name: Setup Flutter SDK
-      uses: flutter-actions/setup-flutter@v2
+      uses: flutter-actions/setup-flutter@v3
       with:
-        channel: latest
+        channel: stable
         version: 3.0.2
 
     - name: Build Flutter App
