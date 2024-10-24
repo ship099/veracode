@@ -31,7 +31,10 @@ jobs:
 
     - name: Setup Android SDK
       uses: android-actions/setup-android@v2
-
+      
+    - name: Set up Dart
+      uses: dart-lang/setup-dart@v1
+      
     - name: Setup Flutter SDK
       uses: flutter-actions/setup-flutter@v3
       with:
