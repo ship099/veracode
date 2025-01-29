@@ -81,7 +81,7 @@ jobs:
         run: |
            echo "Getting the file structure after the run"
            ls
-           echo ""Getting the file structure after the run"
+           echo "Getting the file structure after the run"
            pwd
       - name: Run Veracode SCA
         env:
