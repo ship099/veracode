@@ -85,6 +85,6 @@ jobs:
         uses: ship099/veracode-sca@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          create-issues: false
+          create-issues: true
           recursive: true
           allow-dirty: true
