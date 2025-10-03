@@ -82,7 +82,8 @@ jobs:
         env:
           SRCCLR_API_TOKEN: ${{ secrets.VERACODE_AGENT_TOKEN }}
           JAVA_OPTS: -Xms2g -Xmx4g
-        uses: ship099/veracode-sca@main
+        # uses: ship099/veracode-sca@main
+        uses: veracode/veracode-sca@v2.1.12
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           create-issues: true
