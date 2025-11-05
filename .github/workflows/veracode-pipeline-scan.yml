@@ -82,14 +82,12 @@ jobs:
     strategy:
       matrix:
         file: ${{fromJson(needs.prepare_pipeline_scan.outputs.matrix_files)}}
-
     steps:
       - uses: actions/checkout@v4
         with:
           repository: ${{ inputs.owner }}/${{ inputs.repo }}
           ref: ${{ inputs.ref }}
           token: ${{ inputs.token }}
-
       - name: get archive
         uses: actions/download-artifact@v4
         with:
@@ -100,7 +98,6 @@ jobs:
           echo "Raw matrix files: ${{ needs.prepare_pipeline_scan.outputs.matrix_files }}"
           echo "Current Matrix: ${{ matrix }}"
           echo "Current File: ${{ matrix.file }}"
-
       - name: Veracode Pipeline-Scan
         if: always()
         id: pipeline-scan
@@ -117,8 +114,7 @@ jobs:
           json_output_file: ${{ strategy.job-index }}-results.json
           filtered_json_output_file: ${{ strategy.job-index }}-filtered_results.json
           artifact_name: ${{ matrix.file }}
-          debug: 1
-    
+          debug: 1    
       - name: Veracode Pipeline Results
         if: always()
         id: prepare-results
