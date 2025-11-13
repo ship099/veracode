@@ -87,20 +87,9 @@ jobs:
             "matrix_files=$files" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
       - name: Get list of files for matrix
         id: get-files
+        run: |
+          echo "Raw matrix files: ${{ needs.prepare_pipeline_scan.outputs.matrix_files }}"
         
-        # run: |
-        #   if [ "${{ runner.os }}" == "Linux" ]; then
-        #       files=$(ls -1 veracode_artifact_directory | jq -R . | jq -s .)
-        #       echo "Files for matrix: $files"
-        #       files=$(echo $files | jq -c .)  # Compact the JSON array to a single line
-        #       echo "matrix_files=$files" >> $GITHUB_OUTPUT
-              
-        #   elif [ "${{ runner.os }}" == "Windows" ]; then
-        #       $files = Get-ChildItem -Name "veracode_artifact_directory" | ForEach-Object { $_ } | ConvertTo-Json 
-        #       Write-Host "Files for matrix: $files"  
-        #       # Compact JSON array to a single line
-        #       $files = ($files | ConvertFrom-Json | ConvertTo-Json -Compress)
-        #       "matrix_files=$files" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         
   pipeline_scan:
     runs-on: windows-latest
