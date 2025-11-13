@@ -51,7 +51,7 @@ on:
 
 jobs:
   prepare_pipeline_scan:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     name: prepare pipeline scan
     outputs:
       matrix_files: ${{ steps.get-files.outputs.matrix_files }} 
@@ -87,9 +87,8 @@ jobs:
             $files = ($files | ConvertFrom-Json | ConvertTo-Json -Compress)
             "matrix_files=$files" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         
-
   pipeline_scan:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: prepare_pipeline_scan
     strategy:
       matrix:
