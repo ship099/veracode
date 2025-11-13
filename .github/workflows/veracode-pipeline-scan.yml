@@ -80,7 +80,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           # Get the list of files in the artifact directory
-            $files = ,Get-ChildItem -Name "veracode_artifact_directory" | ForEach-Object { $_ } | ConvertTo-Json 
+            $files = Get-ChildItem -Name "veracode_artifact_directory" | ForEach-Object { $_ } | ConvertTo-Json 
             Write-Host "Files for matrix: $files"  
             # Compact JSON array to a single line
             $files = ,($files | ConvertFrom-Json | ConvertTo-Json -Compress)
