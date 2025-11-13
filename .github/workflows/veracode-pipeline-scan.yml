@@ -80,12 +80,10 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           # Get the list of files in the artifact directory
-            $files = Get-ChildItem -Name "veracode_artifact_directory" | ForEach-Object { $_ } | ConvertTo-Json 
+            $files = @(Get-ChildItem -Name "veracode_artifact_directory")
+            $files_json = $files | ConvertTo-Json -Compress
             Write-Host "Files for matrix: $files"  
-            # Compact JSON array to a single line
-            $files = ,($files | ConvertFrom-Json | ConvertTo-Json -Compress)
-            Write-Host "Files for matrix: $files"
-            "matrix_files=$files" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            "matrix_files=$files_json" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         
   pipeline_scan:
     runs-on: windows-latest
