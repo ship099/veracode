@@ -54,7 +54,7 @@ jobs:
     runs-on: windows-latest
     name: prepare pipeline scan
     outputs:
-      matrix_files: ${{ steps.get-files.outputs.matrix_files }} 
+      matrix_files: ${{ steps.get-files-linux.outputs.matrix_files || steps.get-files-windows.outputs.matrix_files }} 
 
     steps:
       - name: checkout repo
@@ -85,11 +85,6 @@ jobs:
             # Compact JSON array to a single line
             $files = ($files | ConvertFrom-Json | ConvertTo-Json -Compress)
             "matrix_files=$files" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-      - name: Get list of files for matrix
-        id: get-files
-        run: |
-          echo "Raw matrix files: ${{ needs.prepare_pipeline_scan.outputs.matrix_files }}"
-        
         
   pipeline_scan:
     runs-on: windows-latest
