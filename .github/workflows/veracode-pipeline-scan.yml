@@ -51,7 +51,7 @@ on:
 
 jobs:
   prepare_pipeline_scan:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     name: prepare pipeline scan
     outputs:
       matrix_files: ${{ steps.get-files-linux.outputs.matrix_files || steps.get-files-windows.outputs.matrix_files }} 
