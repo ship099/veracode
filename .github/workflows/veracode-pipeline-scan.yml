@@ -51,7 +51,7 @@ on:
 
 jobs:
   prepare_pipeline_scan:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     name: prepare pipeline scan
     outputs:
       matrix_files: ${{ steps.get-files-windows.outputs.matrix_files || steps.get-files-linux.outputs.matrix_files }} 
@@ -83,7 +83,7 @@ jobs:
             $files = Get-ChildItem -Name "veracode_artifact_directory" | ForEach-Object { $_ } | ConvertTo-Json 
             Write-Host "Files for matrix: $files"  
             # Compact JSON array to a single line
-            $files = ($files | ConvertFrom-Json | ConvertTo-Json -Compress)
+            $files = ($files | ConvertFrom-Json)
             "matrix_files=$files" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         
   pipeline_scan:
