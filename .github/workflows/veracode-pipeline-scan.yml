@@ -74,7 +74,7 @@ jobs:
           echo "Files for matrix: $files"
           files=$(echo $files | jq -c .)  # Compact the JSON array to a single line
           echo "matrix_files=$files" >> $GITHUB_OUTPUT
-        shell: bash
+        shell: pwsh
 
   pipeline_scan:
     runs-on: windows-latest
