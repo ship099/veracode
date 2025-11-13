@@ -25,7 +25,7 @@ jobs:
 
   veracode-sca-scan:
     needs: [register]
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     name: Veracode Component Analysis
     timeout-minutes: 30
 
@@ -43,7 +43,6 @@ jobs:
         run: |
           if ((Test-Path "package.json") -and (Test-Path "pnpm-lock.yaml") -and (Test-Path "pnpm-workspace.yaml")) {
           Write-Host "- The files package.json, pnpm-lock.yaml, and pnpm-workspace.yaml exist. This looks like a PNPM workspace project."
-
               $packageJson = Get-Content "package.json" -Raw
               if ($packageJson -match '"workspaces"') {
                   Write-Host "-- The package.json file contains workspaces - running PNPM lockfile generator"
@@ -58,21 +57,17 @@ jobs:
             }
             elseif ((Test-Path "package.json") -and -not (Test-Path "pnpm-lock.yaml") -and -not (Test-Path "pnpm-workspace.yaml")) {
                 $packageJson = Get-Content "package.json" -Raw
-        
                 if ($packageJson -match '"workspaces"') {
                     Write-Host "- The package.json file exists and contains 'workspaces'."
-        
                     if ($packageJson -match '"yarn"') {
                         Write-Host "-- Yarn was identified in the package.json file"
                         $match = Select-String '"yarn"' package.json | Select-Object -First 1
-                        $version = ($match.Line -split '\D+' | Where-Object { $_ -match '^\d+$' } | Select-Object -First 1)
-        
+                        $version = ($match.Line -split '\D+' | Where-Object { $_ -match '^\d+$' } | Select-Object -First 1)        
                         if (-not $version) {
                             Write-Host "-- The yarn version could not be identified."
                         }
                         else {
                             Write-Host "-- The yarn version is: $version"
-        
                             if ([int]$version -lt 3) {
                                 Write-Host "---- Running v2 lockfile generator"
                                 node "veracode-helper/helper/yarn-lock-file-generator-v2.js" --folder "/home/runner/work/veracode/veracode"
