@@ -81,6 +81,9 @@ jobs:
         run: |
           # Get the list of files in the artifact directory
             $files = @(Get-ChildItem -Name "veracode_artifact_directory")
+            if ($files.Count -eq 1) {
+                  $files = @($files)
+              }
             $files_json = $files | ConvertTo-Json -Compress
             Write-Host "Files for matrix: $files"  
             "matrix_files=$files_json" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
