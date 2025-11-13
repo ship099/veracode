@@ -68,28 +68,19 @@ jobs:
           path: ./veracode_artifact_directory
 
       - name: Get list of files for matrix
-        id: get-files-linux
-        if: runner.os == 'Linux'
+        id: get-files
         run: |
-          files=$(ls -1 veracode_artifact_directory | jq -R . | jq -s .)
-          echo "Files for matrix: $files"
-          files=$(echo $files | jq -c .)  # Compact the JSON array to a single line
-          echo "matrix_files=$files" >> $GITHUB_OUTPUT
-        env:
-          FILES: ${{ steps.get-files-linux.outputs.matrix_files }}
-
-      - name: Get list of files for matrix
-        id: get-files-windows
-        if: runner.os == 'Windows'
-        run: |
-          # Get the list of files in the artifact directory
-            $files = Get-ChildItem -Name "veracode_artifact_directory" | ForEach-Object { $_ } | ConvertTo-Json 
-            Write-Host "Files for matrix: $files"  
-            # Compact JSON array to a single line
-            $files = ($files | ConvertFrom-Json | ConvertTo-Json -Compress)
-            "matrix_files=$files" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-        env:
-          FILES: ${{ steps.get-files-windows.outputs.matrix_files }}
+          if [ "${{ runner.os }}" == "Linux" ]; then
+              files=$(ls -1 veracode_artifact_directory | jq -R . | jq -s .)
+              echo "Files for matrix: $files"
+              files=$(echo $files | jq -c .)  # Compact the JSON array to a single line
+              echo "matrix_files=$files" >> $GITHUB_OUTPUT
+          elif [ "${{ runner.os }}" == "Windows" ]; then
+              $files = Get-ChildItem -Name "veracode_artifact_directory" | ForEach-Object { $_ } | ConvertTo-Json 
+              Write-Host "Files for matrix: $files"  
+              # Compact JSON array to a single line
+              $files = ($files | ConvertFrom-Json | ConvertTo-Json -Compress)
+              "matrix_files=$files" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         
   pipeline_scan:
     runs-on: ubuntu-latest
