@@ -22,10 +22,11 @@ jobs:
       github_token: ${{ github.event.client_payload.token }}
       run_id: ${{ github.run_id }}
       branch: ${{ github.event.client_payload.repository.branch }}
+      default_runs_on: ${{ github.event.client_payload.user_config.default_runs_on }}
 
   validations:
     needs: register
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(github.event.client_payload.user_config.default_runs_on) }}
     name: Validations
     steps:
       - name: Verify Veracode API credentials
@@ -59,7 +60,7 @@ jobs:
           break_build_invalid_policy: ${{github.event.client_payload.break_build_invalid_policy }}
 
   prepare_pipeline_scan:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(github.event.client_payload.user_config.default_runs_on) }}
     needs: [register, validations]
     name: prepare pipeline scan
     outputs:
@@ -86,7 +87,7 @@ jobs:
         shell: bash
 
   pipeline_scan:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(github.event.client_payload.user_config.default_runs_on) }}
     needs: [register, validations, prepare_pipeline_scan]
     strategy:
       matrix:
@@ -175,7 +176,7 @@ jobs:
           commitHash:  ${{ github.event.client_payload.sha }}
 
   update-checks-status:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(github.event.client_payload.user_config.default_runs_on) }}
     needs: pipeline_scan
     if: always()
     steps:
@@ -208,4 +209,3 @@ jobs:
                 https://api.github.com/repos/${{ github.event.client_payload.repository.owner }}/${{ github.event.client_payload.repository.name }}/check-runs/${{ needs.register.outputs.run_id }} \
                 -d @"payload.txt"
             done
-       
