@@ -199,10 +199,3 @@ jobs:
           name: veracode-artifact
           path: "${{ steps.application_package_windows.outputs.working_dir }}/veracode-artifacts/*"
           if-no-files-found: error
-
-  cleanup:
-    needs: [build-prepare, build-linux, build-windows]
-    if: always()
-    uses: ./.github/workflows/veracode-clean-up.yml
-    with:
-      runs_on: ${{ inputs.default_runs_on }}
