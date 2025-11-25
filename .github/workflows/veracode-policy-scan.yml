@@ -51,16 +51,19 @@ on:
       language:
         required: true
         type: string
+      default_runs_on:
+        required: true
+        type: string
 
 jobs:
   policy_scan:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.default_runs_on) }}
     name: policy scan
 
     steps:
       - name: checkout repo
         uses: actions/checkout@v4
-      
+
       # get the compiled binary from a previous job
       - name: get archive
         uses: actions/download-artifact@v4
@@ -69,12 +72,13 @@ jobs:
           path: ./veracode_artifact_directory
 
       - name: set version
+        shell: bash
         run: |
           echo "VERSION=${{ github.run_id }}-$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
 
       # run the policy scan action
       - name: Veracode Upload and Scan Action Step
-        uses: veracode/uploadandscan-action@v0.1.8
+        uses: veracode/uploadandscan-action@v0.1.9
         id: upload_and_scan
         with:
           appname: ${{ inputs.profile_name }}
@@ -111,7 +115,7 @@ jobs:
 
   veracode-remove-sandbox:
     needs: policy_scan
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.default_runs_on) }}
     if: ${{ github.event.client_payload.user_config.sandbox_scan.execute_remove_sandbox_action && always() }}
     name: Remove Sandbox
     steps:
@@ -125,7 +129,7 @@ jobs:
 
   code-scanning-alert:
     needs: policy_scan
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.default_runs_on) }}
     if: ${{ inputs.create_code_scanning_alert && always() }}
     name: Create code scanning alerts
     steps:
@@ -156,7 +160,7 @@ jobs:
   create-issues:
     needs: policy_scan
     if: ${{ inputs.create_issue && always() }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(inputs.default_runs_on) }}
     name: Create issues
     steps:
       - uses: actions/checkout@v4
@@ -181,12 +185,8 @@ jobs:
           commitHash: ${{ inputs.sha }}
 
   cleanup:
-    runs-on: ${{ fromJson(github.event.client_payload.user_config.default_runs_on) }}
-    if: always()
     needs: [policy_scan, veracode-remove-sandbox, code-scanning-alert, create-issues]
-    steps:
-      - name: Cleanup workspace and Docker
-        if: always()
-        run: |
-          echo "Running final cleanup..."
-          sudo rm -rf $GITHUB_WORKSPACE/
+    if: always()
+    uses: ./.github/workflows/veracode-clean-up.yml
+    with:
+      runs_on: ${{ inputs.default_runs_on }}

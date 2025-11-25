@@ -22,10 +22,11 @@ jobs:
       github_token: ${{ github.event.client_payload.token }}
       run_id: ${{ github.run_id }}
       branch: ${{ github.event.client_payload.repository.branch }}
+      default_runs_on: ${{ github.event.client_payload.user_config.default_runs_on }}
 
   veracode-sca-scan:
     needs: [register]
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(github.event.client_payload.user_config.default_runs_on) }}
     name: Veracode Component Analysis
     timeout-minutes: 30
 
@@ -38,7 +39,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: 'veracode-helper'
-      - name: Find yarn JS apps using workspaces
+
+      - name: Find yarn JS apps using workspaces - Linux
+        if: contains(runner.os, 'Linux')
         run: |
           if [ -f "package.json" ] && [ -f "pnpm-lock.yaml" ] && [ -f "pnpm-workspace.yaml" ]; then
             echo "- The file package.json, pnpm-lock.yml and pnpm-workspace.yaml exist. This looks like a PNPM workspace project."
@@ -78,11 +81,65 @@ jobs:
           fi
           rm -rf veracode-helper
 
+      - name: Find yarn JS apps using workspaces - Windows
+        shell: pwsh
+        if: contains(runner.os, 'Windows')
+        run: |
+          if ((Test-Path "package.json") -and (Test-Path "pnpm-lock.yaml") -and (Test-Path "pnpm-workspace.yaml")) {
+          Write-Host "- The files package.json, pnpm-lock.yaml, and pnpm-workspace.yaml exist. This looks like a PNPM workspace project."
+              $packageJson = Get-Content "package.json" -Raw
+              if ($packageJson -match '"workspaces"') {
+                  Write-Host "-- The package.json file contains workspaces - running PNPM lockfile generator"
+                  node "veracode-helper/helper/pnpm-helper.js" `
+                    --folder "/home/runner/work/veracode/veracode" `
+                    --intRepoPrefix "${{ github.event.client_payload.repository.owner }}" `
+                    --repoName "${{ github.event.client_payload.repository.name }}"
+              }
+              else {
+                  Write-Host "-- The package.json file does not contain workspaces - exiting"
+              }
+            }
+            elseif ((Test-Path "package.json") -and -not (Test-Path "pnpm-lock.yaml") -and -not (Test-Path "pnpm-workspace.yaml")) {
+                $packageJson = Get-Content "package.json" -Raw
+                if ($packageJson -match '"workspaces"') {
+                    Write-Host "- The package.json file exists and contains 'workspaces'."
+                    if ($packageJson -match '"yarn"') {
+                        Write-Host "-- Yarn was identified in the package.json file"
+                        $match = Select-String '"yarn"' package.json | Select-Object -First 1
+                        $version = ($match.Line -split '\D+' | Where-Object { $_ -match '^\d+$' } | Select-Object -First 1)
+                        if (-not $version) {
+                            Write-Host "-- The yarn version could not be identified."
+                        }
+                        else {
+                            Write-Host "-- The yarn version is: $version"
+                            if ([int]$version -lt 3) {
+                                Write-Host "---- Running v2 lockfile generator"
+                                node "veracode-helper/helper/yarn-lock-file-generator-v2.js" --folder "/home/runner/work/veracode/veracode"
+                            }
+                            elseif ([int]$version -ge 3) {
+                                Write-Host "---- Running v3 lockfile generator"
+                                node "veracode-helper/helper/yarn-lock-file-generator-v3.js" --folder "/home/runner/work/veracode/veracode"
+                            }
+                        }
+                    }
+                    else {
+                        Write-Host "- Yarn was not identified in the package.json file"
+                    }
+                }
+                else {
+                    Write-Host "- The package.json file exists, but it does not contain 'workspaces'."
+                }
+            }
+            else {
+                Write-Host "The package.json file does not exist."
+            }
+            Remove-Item -Recurse -Force "veracode-helper" -ErrorAction SilentlyContinue
+
       - name: Run Veracode SCA
         env:
           SRCCLR_API_TOKEN: ${{ secrets.VERACODE_AGENT_TOKEN }}
           JAVA_OPTS: -Xms2g -Xmx4g
-        uses: veracode/veracode-sca@v2.1.14
+        uses: veracode/veracode-sca@v2.1.15
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           create-issues: false
@@ -91,13 +148,8 @@ jobs:
           breakBuildOnPolicyFindings: ${{ github.event.client_payload.user_config.break_build_policy_findings }}
 
   cleanup:
-    runs-on: ${{ fromJson(github.event.client_payload.user_config.default_runs_on) }}
+    needs: veracode-sca-scan
     if: always()
-    needs: [register, veracode-sca-scan]
-    steps:
-      - name: Cleanup workspace and Docker
-        if: always()
-        run: |
-          echo "Running final cleanup..."
-          sudo rm -rf $GITHUB_WORKSPACE/
-          
+    uses: ./.github/workflows/veracode-clean-up.yml
+    with:
+      runs_on: ${{ github.event.client_payload.user_config.default_runs_on }}

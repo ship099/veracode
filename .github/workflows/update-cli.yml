@@ -30,6 +30,7 @@ jobs:
             downloadUrl="https://tools.veracode.com/veracode-cli/veracode-cli_${latest_version}_linux_x86.tar.gz"
             echo "Download URL: $downloadUrl"
             curl -sSO $downloadUrl
+            curl -sS -o veracode-cli_${latest_version}_windows.ps1 https://tools.veracode.com/veracode-cli/install.ps1
             ls -la
             echo "CLEAN UP"
             rm -rf veracode-cli_${local_version}_linux_x86.tar.gz
@@ -40,6 +41,12 @@ jobs:
         run: |
           git config --global user.name 'veracode'
           git config --global user.email 'cli@veracode.com'
-          git add -A
-          git commit -am "New CLI Version"
-          git push --verbose
+          # Check if there are any changes
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "Changes detected — committing and pushing latest CLI."
+            git add -A
+            git commit -m "New CLI Version"
+            git push --verbose
+          else
+            echo "No changes to commit."
+          fi
