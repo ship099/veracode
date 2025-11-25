@@ -34,12 +34,24 @@ on:
         type: string
 
 jobs:
-  build-ubuntu:
+  build-prepare:
+    runs-on: ${{ fromJSON(inputs.build_runs_on) }}
+    name: Build preparation
+    outputs:
+      runner_os: ${{ steps.identify_runner_os.outputs.runner_os }}
+    steps:
+      - name: Identify the runner OS
+        id: identify_runner_os
+        shell: bash
+        run: echo "runner_os=${{ runner.os }}" >> $GITHUB_OUTPUT
+
+  build-linux:
+    needs: build-prepare
     runs-on: ${{ fromJSON(inputs.build_runs_on) }}
     container:
       image: ${{ inputs.build_packager_image }}
-    name: Build on Ubuntu
-    if: contains(inputs.build_runs_on, 'ubuntu')
+    name: Build on Linux
+    if: contains(needs.build-prepare.outputs.runner_os, 'Linux')
     env:
       VERACODE_API_KEY_ID: '${{ secrets.VERACODE_API_ID }}'
       VERACODE_API_KEY_SECRET: '${{ secrets.VERACODE_API_KEY }}'
@@ -103,13 +115,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: veracode-artifact
-          path: "${{ steps.application_package_linux.outputs.working_dir || steps.application_package_windows.outputs.working_dir }}/veracode-artifacts/*"
+          path: "${{ steps.application_package_linux.outputs.working_dir }}/veracode-artifacts/*"
           if-no-files-found: error
 
   build-windows:
+    needs: build-prepare
     runs-on: ${{ fromJSON(inputs.build_runs_on) }}
     name: Build on Windows
-    if: contains(inputs.build_runs_on, 'windows')
+    if: contains(needs.build-prepare.outputs.runner_os, 'Windows')
     env:
       VERACODE_API_KEY_ID: '${{ secrets.VERACODE_API_ID }}'
       VERACODE_API_KEY_SECRET: '${{ secrets.VERACODE_API_KEY }}'
@@ -184,11 +197,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: veracode-artifact
-          path: "${{ steps.application_package_windows.outputs.working_dir || steps.application_package_windows.outputs.working_dir }}/veracode-artifacts/*"
+          path: "${{ steps.application_package_windows.outputs.working_dir }}/veracode-artifacts/*"
           if-no-files-found: error
 
   cleanup:
-    needs: [build-ubuntu, build-windows]
+    needs: [build-prepare, build-linux, build-windows]
     if: always()
     uses: ./.github/workflows/veracode-clean-up.yml
     with:

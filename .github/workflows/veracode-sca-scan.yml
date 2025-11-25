@@ -40,8 +40,8 @@ jobs:
         with:
           path: 'veracode-helper'
 
-      - name: Find yarn JS apps using workspaces - Ubuntu
-        if: contains(inputs.build_runs_on, 'ubuntu')
+      - name: Find yarn JS apps using workspaces - Linux
+        if: contains(runner.os, 'Linux')
         run: |
           if [ -f "package.json" ] && [ -f "pnpm-lock.yaml" ] && [ -f "pnpm-workspace.yaml" ]; then
             echo "- The file package.json, pnpm-lock.yml and pnpm-workspace.yaml exist. This looks like a PNPM workspace project."
@@ -83,7 +83,7 @@ jobs:
 
       - name: Find yarn JS apps using workspaces - Windows
         shell: pwsh
-        if: contains(inputs.build_runs_on, 'windows')
+        if: contains(runner.os, 'Windows')
         run: |
           if ((Test-Path "package.json") -and (Test-Path "pnpm-lock.yaml") -and (Test-Path "pnpm-workspace.yaml")) {
           Write-Host "- The files package.json, pnpm-lock.yaml, and pnpm-workspace.yaml exist. This looks like a PNPM workspace project."
