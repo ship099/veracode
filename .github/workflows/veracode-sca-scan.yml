@@ -103,3 +103,4 @@ jobs:
           create-issues: false
           recursive: true
           allow-dirty: true
+          breakBuildOnPolicyFindings: ${{ github.event.client_payload.user_config.break_build_policy_findings }}
