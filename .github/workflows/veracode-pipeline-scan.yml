@@ -55,6 +55,7 @@ jobs:
     name: prepare pipeline scan
     outputs:
       matrix_files: ${{ steps.get-files.outputs.matrix_files }} 
+      veracode_policy_name: ${{ steps.policy_name_for_pipeline.outputs.veracode_policy_name }}
 
     steps:
       - name: checkout repo
@@ -75,6 +76,24 @@ jobs:
           files=$(echo $files | jq -c .)  # Compact the JSON array to a single line
           echo "matrix_files=$files" >> $GITHUB_OUTPUT
         shell: bash
+
+      - name: Policy for Pipleine Scans
+        id: verify_policy_for_pipeline
+        uses: veracode/github-actions-integration-helper@v0.1.8
+        with:
+          action: getPolicyNameByProfileName
+          appname: ${{ github.event.client_payload.user_config.profile_name }}
+          vid: ${{ secrets.VERACODE_API_ID }}
+          vkey: ${{ secrets.VERACODE_API_KEY }}
+          
+      - name: Resolve application name
+        id: policy_name_for_pipeline
+        run: |
+          if [ -z "${{ steps.verify_policy_for_pipeline.outputs.policy_name }}" ]; then
+            echo "veracode_policy_name=${{ inputs.policy_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "veracode_policy_name=${{ steps.verify_policy_for_pipeline.outputs.policy_name }}" >> $GITHUB_OUTPUT
+          fi  
 
   pipeline_scan:
     runs-on: ubuntu-latest
@@ -101,25 +120,6 @@ jobs:
           echo "Current Matrix: ${{ matrix }}"
           echo "Current File: ${{ matrix.file }}"
           
-      - name: Policy for Pipleine Scans
-        id: verify_policy_for_pipeline
-        uses: veracode/github-actions-integration-helper@v0.1.8
-        with:
-          action: getPolicyNameByProfileName
-          appname: ${{ github.event.client_payload.user_config.profile_name }}
-          vid: ${{ secrets.VERACODE_API_ID }}
-          vkey: ${{ secrets.VERACODE_API_KEY }}
-          
-      - name: Resolve application name
-        id: policy_name_for_pipeline
-        run: |
-          if [ -z "${{ steps.verify_policy_for_pipeline.outputs.policy_name }}" ]; then
-            echo "veracode_policy_name=${{ inputs.policy_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "veracode_policy_name=${{ steps.verify_policy_for_pipeline.outputs.policy_name }}" >> $GITHUB_OUTPUT
-          fi
-
-          
       - name: Veracode Pipeline-Scan
         if: always()
         id: pipeline-scan
@@ -127,7 +127,7 @@ jobs:
         with:
           vid: ${{ secrets.VERACODE_API_ID }}
           vkey: ${{ secrets.VERACODE_API_KEY }}
-          veracode_policy_name: ${{ steps.policy_name_for_pipeline.outputs.veracode_policy_name }}
+          veracode_policy_name: ${{ needs.prepare_pipeline_scan.outputs.veracode_policy_name }}
           file: ./veracode_artifact_directory/${{ matrix.file }}
           fail_build: ${{ inputs.break_build_policy_findings }}
           summary_output: true
