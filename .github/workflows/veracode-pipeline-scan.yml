@@ -77,23 +77,23 @@ jobs:
           echo "matrix_files=$files" >> $GITHUB_OUTPUT
         shell: bash
 
-      - name: Policy for Pipleine Scans
-        id: verify_policy_for_pipeline
-        uses: veracode/github-actions-integration-helper@v0.1.8
-        with:
-          action: getPolicyNameByProfileName
-          appname: ${{ github.event.client_payload.user_config.profile_name }}
-          vid: ${{ secrets.VERACODE_API_ID }}
-          vkey: ${{ secrets.VERACODE_API_KEY }}
+      # - name: Policy for Pipleine Scans
+      #   id: verify_policy_for_pipeline
+      #   uses: veracode/github-actions-integration-helper@v0.1.8
+      #   with:
+      #     action: getPolicyNameByProfileName
+      #     appname: ${{ github.event.client_payload.user_config.profile_name }}
+      #     vid: ${{ secrets.VERACODE_API_ID }}
+      #     vkey: ${{ secrets.VERACODE_API_KEY }}
           
-      - name: Resolve application name
-        id: policy_name_for_pipeline
-        run: |
-          if [ -z "${{ steps.verify_policy_for_pipeline.outputs.policy_name }}" ]; then
-            echo "veracode_policy_name=${{ inputs.policy_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "veracode_policy_name=${{ steps.verify_policy_for_pipeline.outputs.policy_name }}" >> $GITHUB_OUTPUT
-          fi  
+      # - name: Resolve application name
+      #   id: policy_name_for_pipeline
+      #   run: |
+      #     if [ -z "${{ steps.verify_policy_for_pipeline.outputs.policy_name }}" ]; then
+      #       echo "veracode_policy_name=${{ inputs.policy_name }}" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "veracode_policy_name=${{ steps.verify_policy_for_pipeline.outputs.policy_name }}" >> $GITHUB_OUTPUT
+      #     fi  
 
   pipeline_scan:
     runs-on: ubuntu-latest
@@ -127,7 +127,7 @@ jobs:
         with:
           vid: ${{ secrets.VERACODE_API_ID }}
           vkey: ${{ secrets.VERACODE_API_KEY }}
-          veracode_policy_name: ${{ needs.prepare_pipeline_scan.outputs.veracode_policy_name }}
+          veracode_policy_name: ${{ inputs.policy_name }}
           file: ./veracode_artifact_directory/${{ matrix.file }}
           fail_build: ${{ inputs.break_build_policy_findings }}
           summary_output: true
@@ -138,6 +138,7 @@ jobs:
           artifact_name: ${{ matrix.file }}
           debug: 1
           workflow_app: true
+          app_name: ${{ inputs.profile_name }}
     
       - name: Veracode Pipeline Results
         if: always()
