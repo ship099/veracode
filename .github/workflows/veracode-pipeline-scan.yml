@@ -55,7 +55,7 @@ jobs:
     name: prepare pipeline scan
     outputs:
       matrix_files: ${{ steps.get-files.outputs.matrix_files }} 
-      veracode_policy_name: ${{ steps.policy_name_for_pipeline.outputs.veracode_policy_name }}
+      # veracode_policy_name: ${{ steps.policy_name_for_pipeline.outputs.veracode_policy_name }}
 
     steps:
       - name: checkout repo
@@ -123,7 +123,8 @@ jobs:
       - name: Veracode Pipeline-Scan
         if: always()
         id: pipeline-scan
-        uses: veracode/Veracode-pipeline-scan-action@v1.0.19
+        # uses: veracode/Veracode-pipeline-scan-action@v1.0.19
+        uses: ship099/pipeline-scan-action@SDEVX-9325
         with:
           vid: ${{ secrets.VERACODE_API_ID }}
           vkey: ${{ secrets.VERACODE_API_KEY }}
