@@ -46,53 +46,34 @@ jobs:
   create_check_run:
     runs-on: ${{ fromJson(inputs.default_runs_on) }}
     outputs:
-      run_id: ${{ steps.create_check.outputs.run_id }}
-
-    steps:
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-
-      - name: Create check run via GitHub API
-        id: create_check
-        uses: actions/github-script@v7
+      run_id: ${{ fromJson(steps.create_check_run.outputs.data).id }}
+    steps: 
+      # Create check run
+      - name: GitHub API Request to create a check
+        uses: octokit/request-action@v2.x
+        id: create_check_run
         with:
-          github-token: ${{ inputs.github_token }}
-          script: |
-            const owner = '${{ inputs.repositroy_owner }}'
-            const repo = '${{ inputs.repositroy_name }}'
-            const name = '${{ inputs.check_run_name }}'
-            const head_sha = '${{ inputs.head_sha }}'
-            const details_url = `https://github.com/${{ github.repository }}/actions/runs/${{ inputs.run_id }}`
+          route: POST /repos/{owner}/{repo}/check-runs
+        env:
+          GITHUB_TOKEN: ${{ inputs.github_token }}
+          INPUT_OWNER: ${{ inputs.repositroy_owner }}
+          INPUT_REPO: ${{ inputs.repositroy_name }}
+          INPUT_NAME: ${{ inputs.check_run_name }}
+          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
+          INPUT_DETAILS_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ inputs.run_id }}"
 
-            const response = await github.rest.checks.create({
-              owner,
-              repo,
-              name,
-              head_sha,
-              status: 'in_progress',
-              details_url
-            })
-
-            const checkRunId = response.data.id
-            core.setOutput('run_id', checkRunId)
-
-            // Create workflow-metadata.json
-            const fs = require('fs')
-
-            const metadata = {
-              check_run_type: '${{ inputs.event_type }}',
-              repository_name: repo,
-              check_run_id: checkRunId,
-              branch: '${{ inputs.branch }}',
-              sha: head_sha
-            }
-
-            fs.writeFileSync(
-              'workflow-metadata.json',
-              JSON.stringify(metadata, null, 2)
-            )
-
-            core.info(`Created check run ${checkRunId}`)
+      - name: Create metadata
+        id: create-metadata-json
+        run: |
+          echo '{
+            "check_run_type": "${{ inputs.event_type }}",
+            "repository_name": "${{ inputs.repositroy_name }}",
+            "check_run_id": ${{ fromJson(steps.create_check_run.outputs.data).id }},
+            "branch": "${{ inputs.branch }}",
+            "sha": "${{ inputs.head_sha }}"
+          }' > workflow-metadata.json
+          echo "run_id=${{ fromJson(steps.create_check_run.outputs.data).id }}" >> "GITHUB_OUTPUT"
+        shell: bash
 
       - name: Save metadata
         uses: actions/upload-artifact@v4

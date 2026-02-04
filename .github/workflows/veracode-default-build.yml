@@ -45,10 +45,8 @@ jobs:
     steps:
       - name: Identify the runner OS
         id: identify_runner_os
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.setOutput('runner_os', process.env.RUNNER_OS);
+        shell: bash
+        run: echo "runner_os=${{ runner.os }}" >> $GITHUB_OUTPUT
 
   build-linux:
     needs: build-prepare

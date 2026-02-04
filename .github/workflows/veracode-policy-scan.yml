@@ -75,17 +75,13 @@ jobs:
           path: ./veracode_artifact_directory
 
       - name: Set version
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable(
-              'VERSION',
-              `${process.env.GITHUB_RUN_ID}-${new Date().toISOString().replace(/[-:]/g,'').slice(0,15)}`
-            )
+        shell: bash
+        run: |
+          echo "VERSION=${{ github.run_id }}-$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
 
       # run the policy scan action
       - name: Veracode Upload and Scan Action Step
-        uses: veracode/uploadandscan-action@SDEVX-9690
+        uses: veracode/uploadandscan-action@v0.2.0
         id: upload_and_scan
         with:
           appname: ${{ inputs.profile_name }}
