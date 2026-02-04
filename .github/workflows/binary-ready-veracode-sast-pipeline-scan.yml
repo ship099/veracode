@@ -11,13 +11,7 @@ on:
     types: [binary-ready-veracode-sast-pipeline-scan]
 
 jobs:
-  cleanup:
-    uses: ./.github/workflows/veracode-clean-up.yml
-    with:
-      runs_on: ${{ github.event.client_payload.user_config.default_runs_on }}
-
   register:
-    needs: cleanup
     uses: ./.github/workflows/veracode-check-run.yml
     with:
       check_run_name: ${{ github.workflow }}
@@ -186,32 +180,32 @@ jobs:
     needs: pipeline_scan
     if: always()
     steps:
-      - name: Update check
-        id: update_check_status
-        shell: bash
-        env:
-          BREAK_BUILD_ON_ERROR: ${{ github.event.client_payload.user_config.break_build_on_error }}
-          BREAK_BUILD_ON_POLICY: ${{ github.event.client_payload.user_config.break_build_policy_findings }}
-        run: |
-              success_count=0
-              conclusion="failure"
-              # Convert JSON string to a proper format for jq processing
-              echo '${{ toJSON(needs) }}' | jq -c 'to_entries[]' | while read -r job; do
-                status=$(echo "$job" | jq -r '.value.result')
-                echo "$status"
-                if [ "$status" = "success" ]; then
-                  success_count=$((success_count + 1))
+     - name: Update check
+       id: update_check_status
+       shell: bash
+       env:
+        BREAK_BUILD_ON_ERROR: ${{ github.event.client_payload.user_config.break_build_on_error }}
+        BREAK_BUILD_ON_POLICY: ${{ github.event.client_payload.user_config.break_build_policy_findings }}
+       run: |
+            success_count=0
+            conclusion="failure"
+            # Convert JSON string to a proper format for jq processing
+            echo '${{ toJSON(needs) }}' | jq -c 'to_entries[]' | while read -r job; do
+              status=$(echo "$job" | jq -r '.value.result')
+              echo "$status"
+              if [ "$status" = "success" ]; then
+                success_count=$((success_count + 1))
+                echo '{"status": "completed", "conclusion": "success"}' > payload.txt
+              elif [ "$status" = "failure" ]; then
+                if [ "$BREAK_BUILD_ON_ERROR" = "false" && "$BREAK_BUILD_ON_POLICY" = "false" ]; then
                   echo '{"status": "completed", "conclusion": "success"}' > payload.txt
-                elif [ "$status" = "failure" ]; then
-                  if [ "$BREAK_BUILD_ON_ERROR" = "false" && "$BREAK_BUILD_ON_POLICY" = "false" ]; then
-                    echo '{"status": "completed", "conclusion": "success"}' > payload.txt
-                  else
-                    echo '{"status": "completed", "conclusion": "failure"}' > payload.txt
-                  fi
+                else
+                  echo '{"status": "completed", "conclusion": "failure"}' > payload.txt
                 fi
-                curl -X PATCH \
-                  -H "Authorization: Bearer ${{ github.event.client_payload.token }}" \
-                  -H "Accept: application/vnd.github+json" \
-                  https://api.github.com/repos/${{ github.event.client_payload.repository.owner }}/${{ github.event.client_payload.repository.name }}/check-runs/${{ needs.register.outputs.run_id }} \
-                  -d @"payload.txt"
-              done
+              fi
+              curl -X PATCH \
+                -H "Authorization: Bearer ${{ github.event.client_payload.token }}" \
+                -H "Accept: application/vnd.github+json" \
+                https://api.github.com/repos/${{ github.event.client_payload.repository.owner }}/${{ github.event.client_payload.repository.name }}/check-runs/${{ needs.register.outputs.run_id }} \
+                -d @"payload.txt"
+            done
