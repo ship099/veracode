@@ -11,7 +11,13 @@ on:
     types: [binary-ready-veracode-sast-pipeline-scan]
 
 jobs:
+  cleanup:
+    uses: ./.github/workflows/veracode-clean-up.yml
+    with:
+      runs_on: ${{ github.event.client_payload.user_config.default_runs_on }}
+
   register:
+    needs: cleanup
     uses: ./.github/workflows/veracode-check-run.yml
     with:
       check_run_name: ${{ github.workflow }}
@@ -79,12 +85,15 @@ jobs:
 
       - name: Get list of files for matrix
         id: get-files
-        run: |
-          files=$(ls -1 veracode_artifact_directory | jq -R . | jq -s .)
-          echo "Files for matrix: $files"
-          files=$(echo $files | jq -c .)  # Compact the JSON array to a single line
-          echo "matrix_files=$files" >> $GITHUB_OUTPUT
-        shell: bash
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs')
+            const dir = 'veracode_artifact_directory'
+            const files = fs.readdirSync(dir)
+      
+            core.info(`Files for matrix: ${JSON.stringify(files)}`)
+            core.setOutput('matrix_files', JSON.stringify(files))
 
   pipeline_scan:
     runs-on: ${{ fromJSON(github.event.client_payload.user_config.default_runs_on) }}
@@ -111,10 +120,12 @@ jobs:
           path: ./veracode_artifact_directory
 
       - name: Debug Matrix Content
-        run: |
-          echo "Raw matrix files: ${{ needs.prepare_pipeline_scan.outputs.matrix_files }}"
-          echo "Current Matrix: ${{ matrix }}"
-          echo "Current File: ${{ matrix.file }}"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('Raw matrix files:', `${{ needs.prepare_pipeline_scan.outputs.matrix_files }}`)
+            console.log('Current matrix:', JSON.stringify(${{ toJSON(matrix) }}))
+            console.log('Current file:', '${{ matrix.file }}')
 
       # run the pipeline scan action
       - name: Veracode Pipeline-Scan
@@ -180,32 +191,40 @@ jobs:
     needs: pipeline_scan
     if: always()
     steps:
-     - name: Update check
-       id: update_check_status
-       shell: bash
-       env:
-        BREAK_BUILD_ON_ERROR: ${{ github.event.client_payload.user_config.break_build_on_error }}
-        BREAK_BUILD_ON_POLICY: ${{ github.event.client_payload.user_config.break_build_policy_findings }}
-       run: |
-            success_count=0
-            conclusion="failure"
-            # Convert JSON string to a proper format for jq processing
-            echo '${{ toJSON(needs) }}' | jq -c 'to_entries[]' | while read -r job; do
-              status=$(echo "$job" | jq -r '.value.result')
-              echo "$status"
-              if [ "$status" = "success" ]; then
-                success_count=$((success_count + 1))
-                echo '{"status": "completed", "conclusion": "success"}' > payload.txt
-              elif [ "$status" = "failure" ]; then
-                if [ "$BREAK_BUILD_ON_ERROR" = "false" && "$BREAK_BUILD_ON_POLICY" = "false" ]; then
-                  echo '{"status": "completed", "conclusion": "success"}' > payload.txt
-                else
-                  echo '{"status": "completed", "conclusion": "failure"}' > payload.txt
-                fi
-              fi
-              curl -X PATCH \
-                -H "Authorization: Bearer ${{ github.event.client_payload.token }}" \
-                -H "Accept: application/vnd.github+json" \
-                https://api.github.com/repos/${{ github.event.client_payload.repository.owner }}/${{ github.event.client_payload.repository.name }}/check-runs/${{ needs.register.outputs.run_id }} \
-                -d @"payload.txt"
-            done
+      - name: Update check
+        id: update_check_status
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.event.client_payload.token }}
+          script: |
+            const core = require('@actions/core')
+  
+            const needs = ${{ toJSON(needs) }}
+  
+            const breakOnError =
+              '${{ github.event.client_payload.user_config.break_build_on_error }}' === 'true'
+            const breakOnPolicy =
+              '${{ github.event.client_payload.user_config.break_build_policy_findings }}' === 'true'
+  
+            let conclusion = 'success'
+  
+            for (const [jobName, job] of Object.entries(needs)) {
+              core.info(`Job ${jobName}: ${job.result}`)
+  
+              if (job.result === 'failure') {
+                if (breakOnError || breakOnPolicy) {
+                  conclusion = 'failure'
+                  break
+                }
+              }
+            }
+  
+            core.info(`Final check conclusion: ${conclusion}`)
+  
+            await github.rest.checks.update({
+              owner: '${{ github.event.client_payload.repository.owner }}',
+              repo: '${{ github.event.client_payload.repository.name }}',
+              check_run_id: Number('${{ needs.register.outputs.run_id }}'),
+              status: 'completed',
+              conclusion
+            })
