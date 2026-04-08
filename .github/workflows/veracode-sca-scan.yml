@@ -143,7 +143,7 @@ jobs:
             Remove-Item -Recurse -Force "veracode-helper" -ErrorAction SilentlyContinue
 
       - name: Check out to get veracode CLI
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: 'veracode-helper'
           fetch-depth: 0
