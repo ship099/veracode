@@ -43,7 +43,7 @@ jobs:
           repository: ${{ github.event.client_payload.repository.full_name }}
           ref: ${{ github.event.client_payload.repository.branch }}
           token: ${{ github.event.client_payload.token }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: 'veracode-helper'
 
