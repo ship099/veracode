@@ -48,11 +48,11 @@ jobs:
 
     steps:
       - name: checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # get the compiled binary from a previous job
       - name: get archive
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: veracode-artifact
           path: ./veracode_artifact_directory

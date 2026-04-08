@@ -122,7 +122,7 @@ jobs:
           echo "::error::Veracode static scan faced a problem. Please contact your Veracode administrator for more information."
 
       # ---------------- Upload artifact ----------------
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: veracode-artifact
           path: "${{ steps.application_package_linux.outputs.working_dir }}/veracode-artifacts/*"
