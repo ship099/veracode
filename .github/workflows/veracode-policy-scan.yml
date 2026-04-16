@@ -81,7 +81,7 @@ jobs:
 
       # run the policy scan action
       - name: Veracode Upload and Scan Action Step
-        uses: veracode/uploadandscan-action@v0.2.1
+        uses: ship099/uploadandscan-action@main
         id: upload_and_scan
         with:
           appname: ${{ inputs.profile_name }}
@@ -151,7 +151,7 @@ jobs:
           path: /tmp
 
       - name: Convert policy scan output to SARIF format
-        uses: Veracode/veracode-pipeline-scan-results-to-sarif@v2.0.4
+        uses: ship099/veracode-pipeline-scan-results-to-sarif@master
         with:
           scan-type: policy
           results-json: '/tmp/policy_flaws.json'
@@ -181,7 +181,7 @@ jobs:
           path: /tmp
 
       - name: Create flaws as issues
-        uses: veracode/veracode-flaws-to-issues@v2.2.25
+        uses: ship099/veracode-flaws-to-issues
         with:
           scan-results-json: '/tmp/policy_flaws.json'
           repo_owner: ${{ inputs.owner }}
