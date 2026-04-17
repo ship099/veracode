@@ -178,7 +178,7 @@ jobs:
           path: /tmp
 
       - name: Create flaws as issues
-        uses: ship099/veracode-flaws-to-issues
+        uses: ship099/veracode-flaws-to-issues@main
         with:
           scan-results-json: '/tmp/policy_flaws.json'
           repo_owner: ${{ github.event.client_payload.repository.owner }}

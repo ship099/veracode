@@ -167,7 +167,7 @@ jobs:
 
       - name: Create flaws as issues
         if: ${{ github.event.client_payload.user_config.create_issue && always() }}
-        uses: ship099/veracode-flaws-to-issues
+        uses: ship099/veracode-flaws-to-issues@main
         with:
           scan-results-json: mitigated_${{ strategy.job-index }}-filtered_results.json
           repo_owner: ${{ github.event.client_payload.repository.owner }}
