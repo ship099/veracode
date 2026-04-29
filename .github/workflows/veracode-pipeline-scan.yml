@@ -125,6 +125,7 @@ jobs:
           artifact_name: ${{ matrix.file }}
           debug: ${{ inputs.debug == true && '1' || '0' }}
           workflow_app: true
+          app_name: ${{ inputs.profile_name }}
     
       - name: Veracode Pipeline Results
         if: always()
