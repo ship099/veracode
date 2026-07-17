@@ -107,7 +107,7 @@ jobs:
             cd ..
           fi
           
-          PACKAGE_CMD="veracode package --source source-code --output veracode-artifacts --trust --verbose"
+          PACKAGE_CMD="veracode package --source source-code --output veracode-artifacts --trust"
           
 
           if [[ "${{ inputs.debug }}" == "true" ]]; then
