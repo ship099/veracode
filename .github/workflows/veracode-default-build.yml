@@ -106,8 +106,8 @@ jobs:
             bundle install
             cd ..
           fi
-          cd source-code
-          PACKAGE_CMD="veracode package --source . --output veracode-artifacts --trust"
+          
+          PACKAGE_CMD="veracode package --source source-code --output veracode-artifacts --trust --verbose"
           
 
           if [[ "${{ inputs.debug }}" == "true" ]]; then
@@ -116,7 +116,7 @@ jobs:
 
           echo "Running: $PACKAGE_CMD"
           eval "$PACKAGE_CMD"
-          cd ..
+          
 
       # ---------------- Error handler ----------------
       - name: Package error
