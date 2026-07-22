@@ -93,8 +93,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           repository: ${{ inputs.owner }}/${{ inputs.repo }}
-          # ref: ${{ inputs.sha }}
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.sha }}
+          # ref: ${{ inputs.ref }}
           token: ${{ inputs.token }}
 
       - name: get archive
