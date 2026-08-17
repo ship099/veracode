@@ -111,7 +111,8 @@ jobs:
       - name: Veracode Pipeline-Scan
         if: always()
         id: pipeline-scan
-        uses: ship099/Veracode-pipeline-scan-action@analytics
+        # uses: ship099/Veracode-pipeline-scan-action@analytics
+        uses: veracode/Veracode-pipeline-scan-action@1.0.23
         with:
           vid: ${{ secrets.VERACODE_API_ID }}
           vkey: ${{ secrets.VERACODE_API_KEY }}
