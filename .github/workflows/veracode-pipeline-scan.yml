@@ -126,7 +126,7 @@ jobs:
           json_output_file: ${{ strategy.job-index }}-results.json
           # filtered_json_output_file: filtered-results.json
           artifact_name: ${{ matrix.file }}
-          debug: ${{ inputs.debug == true && '1' || '0' }}
+          debug: ${{ inputs.debug == 'true' && '1' || '0' }}
           workflow_app: true
     
       - name: Veracode Pipeline Results
