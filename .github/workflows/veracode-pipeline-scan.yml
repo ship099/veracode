@@ -86,6 +86,7 @@ jobs:
     runs-on: ${{ fromJson(inputs.default_runs_on) }}
     needs: prepare_pipeline_scan
     strategy:
+      fail-fast: false
       matrix:
         file: ${{fromJson(needs.prepare_pipeline_scan.outputs.matrix_files)}}
 
