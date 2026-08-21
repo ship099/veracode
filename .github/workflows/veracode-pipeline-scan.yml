@@ -111,14 +111,15 @@ jobs:
       - name: Veracode Pipeline-Scan
         if: always()
         id: pipeline-scan
-        # uses: ship099/Veracode-pipeline-scan-action@analytics
-        uses: veracode/Veracode-pipeline-scan-action@v1.0.23
+        uses: ship099/Veracode-pipeline-scan-action@ENG-Fix
+        # uses: veracode/Veracode-pipeline-scan-action@v1.0.23
         with:
           vid: ${{ secrets.VERACODE_API_ID }}
           vkey: ${{ secrets.VERACODE_API_KEY }}
           veracode_policy_name: ${{ inputs.policy_name }}
           file: ./veracode_artifact_directory/${{ matrix.file }}
           fail_build: ${{ inputs.break_build_policy_findings }}
+          fail_build_error: ${{ inputs.break_build_on_error }}
           summary_output: true
           summary_output_file: ${{ strategy.job-index }}-results.txt
           json_output: true
