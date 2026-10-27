@@ -128,7 +128,7 @@ jobs:
           # filtered_json_output_file: filtered-results.json
           artifact_name: ${{ matrix.file }}
           debug: ${{ inputs.debug == 'true' && '1' || '0' }}
-          workflow_app: true
+          workflow_app: false
     
       - name: Veracode Pipeline Results
         if: always()
