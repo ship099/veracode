@@ -133,7 +133,7 @@ jobs:
       - name: Veracode Pipeline Results
         if: always()
         id: prepare-results
-        uses: veracode/github-actions-integration-helper@v0.1.11
+        uses: veracode/github-actions-integration-helper@SDEVX-10403
         with:
           action: 'preparePipelineResults'
           token: ${{ inputs.token }}
