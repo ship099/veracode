@@ -81,8 +81,8 @@ jobs:
 
       # run the policy scan action
       - name: Veracode Upload and Scan Action Step
-        # uses: veracode/uploadandscan-action@v0.2.2
-        uses: veracode/uploadandscan-action@SDEVX-73745
+        uses: veracode/uploadandscan-action@v0.2.4
+        # uses: veracode/uploadandscan-action@SDEVX-73745
         # uses: ship099/uploadandscan-action@main
         id: upload_and_scan
         with:
