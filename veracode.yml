@@ -1,4 +1,4 @@
-debug : false
+debug : true
 veracode_static_scan:
   push:
     trigger: false
